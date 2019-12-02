@@ -25,7 +25,7 @@ def get_diversity_offspring(mating, solutions):
     a = np.append(solutions, mating, axis=0)
     sim = cosine_similarity(a,a)
     np.fill_diagonal(sim, 0)
-    return (-(1 - sim).sum(axis=1) * 1/(solutions.shape[0] - 1))[:solutions.shape[0]]
+    return (-(1 - sim).sum(axis=1) * 1/(solutions.shape[0] - 1))[:solutions.shape[0]].reshape(1, -1)
 
 def get_diversity(solutions):
     sim = cosine_similarity(solutions, solutions)

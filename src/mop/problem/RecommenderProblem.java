@@ -153,5 +153,15 @@ public class RecommenderProblem implements BatchDoubleProblem{
 			DoubleSolution ds = pop.get(i);
 			System.out.println("Precision:"+ds.getObjective(0) + "; Diversity:" + ds.getObjective(1) + "; Novelty:"+ ds.getObjective(2));
 		}
+		List<DoubleSolution> pop2 = new ArrayList<DoubleSolution>();
+		for(int i = 0; i < 10; i++) {
+			pop2.add(rp.createSolution());
+			System.out.println(rp.ds2d(pop2.get(i)));
+		}
+		rp.evaluate_batch_offspring(pop, pop2);
+		for(int i = 0; i < 10; i++) {
+			DoubleSolution ds = pop2.get(i);
+			System.out.println("Precision:"+ds.getObjective(0) + "; Diversity:" + ds.getObjective(1) + "; Novelty:"+ ds.getObjective(2));
+		}
 	}
 }

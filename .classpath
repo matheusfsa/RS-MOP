@@ -25,5 +25,7 @@
 	<classpathentry kind="lib" path="jars/jmetal/jmetal-core-5.9.jar"/>
 	<classpathentry kind="lib" path="jars/jmetal/jmetal-exec-5.9.jar"/>
 	<classpathentry kind="lib" path="jars/jmetal/jmetal-problem-5.9.jar"/>
+	<classpathentry kind="lib" path="jars/commons-lang3-3.9.jar"/>
+	<classpathentry kind="lib" path="jars/commons-io-2.6.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

@@ -7,6 +7,8 @@ from sklearn.linear_model import RidgeCV
 import evaluate_solutions as ev
 import numpy as np
 import pandas as pd
+from sklearn.metrics.pairwise import cosine_similarity
+
 class Recommender:
     X_train = None
     y_train = None
@@ -68,3 +70,21 @@ def evaluate_solutions_offspring():
     mating = np.array(message["mating"])
     y = ev.evaluate_solutions_offspring(mating, solucoes, recommender.X_train, recommender)
     return {'response': y.tolist()}
+
+
+@app.route('/filtering', methods=['GET', 'POST'])
+def filtering():
+    message = request.get_json(silent=True)
+    solucoes = message["solucoes"]
+    sim = cosine_similarity(solucoes, recommender.X_test.values)
+    pop_index = sim.argmax(axis=1)
+    res = recommender.X_test.iloc[pop_index, :].drop_duplicates()
+    #res.to_csv('./datasets/Recomendacoes.csv')
+    y = ev.evaluate_solutions(res, recommender.X_test, recommender)
+    objs = pd.DataFrame()
+    objs['Acurácia'] = y[:, 0]
+    objs['Diversidade'] = y[:, 1]
+    objs['Novidade'] = y[:, 2]
+    objs.index = res.index
+    print(objs)
+    return {'response': []}
