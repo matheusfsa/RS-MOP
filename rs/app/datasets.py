@@ -66,7 +66,14 @@ def get_dataset(feats, new_feats_func, **kwargs):
     X = pd.DataFrame(new_feats, index=df_movies.index, columns=['feat_'+ str(i) for i in range(new_feats.shape[1])])
     if feats:
         df_movies_all = df_movies.loc[:, feats]
-        df_movies_all = pd.get_dummies(df_movies_all)
+        #df_movies_all = pd.get_dummies(df_movies_all)
+        if 'genres' in feats:
+            genres = df_movies_all.genres.str.get_dummies()
+
+            for g in genres.columns:
+                df_movies_all[g] = genres[g]
+            df_movies.drop(columns=['genres'])
+        df_movies_all = pd.get_dummies(df_movies_all)    
         for col in X.columns:
             df_movies_all[col] = X[col]
     else:
