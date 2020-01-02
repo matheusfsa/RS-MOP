@@ -34,7 +34,7 @@ public class NSGAIIIBuilder<S extends Solution<?>> implements AlgorithmBuilder<N
   public NSGAIIIBuilder(BatchProblem<S> problem) {
     this.problem = problem ;
     maxIterations = 250 ;
-    populationSize = 100 ;
+    populationSize = 10 ;
     evaluator = new BatchSolutionListEvaluator<S>() ;
     offSpringEvaluator = new OffSpringBatchEvaluator<S>();
   }

@@ -96,7 +96,7 @@ class CF(Recommender):
         movies =  self.get_all_rij(train, test, self.user, n)
         return movies.sort_values(by='rating',ascending=False).iloc[:15, :].index.values.tolist()
     
-
+    
 def test_1_user():
     cf = CF('100k')
     cf.reset_index()

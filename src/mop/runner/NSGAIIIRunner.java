@@ -1,5 +1,6 @@
 package mop.runner;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,6 +22,8 @@ import org.uma.jmetal.util.ProblemUtils;
 import org.uma.jmetal.util.fileoutput.SolutionListOutput;
 import org.uma.jmetal.util.fileoutput.impl.DefaultFileOutputContext;
 
+
+import mop.algorithm.NSGAIII;
 import mop.algorithm.NSGAIIIBuilder;
 import mop.problem.RecommenderProblem;
 import requests.Request;
@@ -36,52 +39,60 @@ public class NSGAIIIRunner extends AbstractAlgorithmRunner {
 	   *        - org.uma.jmetal.runner.multiobjective.NSGAIIIRunner problemName
 	   *        - org.uma.jmetal.runner.multiobjective.NSGAIIIRunner problemName paretoFrontFile
 	   */
-	  public static void main(String[] args) throws JMetalException {
+	  @SuppressWarnings("unchecked")
+	public static void main(String[] args) throws JMetalException {
 		    RecommenderProblem problem;
-		    Algorithm<List<DoubleSolution>> algorithm;
+		    NSGAIII<DoubleSolution> algorithm;
 		    CrossoverOperator<DoubleSolution> crossover;
 		    MutationOperator<DoubleSolution> mutation;
 		    SelectionOperator<List<DoubleSolution>, DoubleSolution> selection;
+		    double crossoverProbability = 0.9 ;
+		    double crossoverDistributionIndex = 30.0 ;
+		    crossover = new SBXCrossover(crossoverProbability, crossoverDistributionIndex) ;
 
-
-	    problem = new RecommenderProblem(1);
-
-	    double crossoverProbability = 0.9 ;
-	    double crossoverDistributionIndex = 30.0 ;
-	    crossover = new SBXCrossover(crossoverProbability, crossoverDistributionIndex) ;
-
-	    double mutationProbability = 1.0 / problem.getNumberOfVariables() ;
-	    double mutationDistributionIndex = 20.0 ;
-	    mutation = new PolynomialMutation(mutationProbability, mutationDistributionIndex) ;
-	    
-	    selection = new BinaryTournamentSelection<DoubleSolution>();
-	    
-	    algorithm = new NSGAIIIBuilder<>(problem)
-	            .setCrossoverOperator(crossover)
-	            .setMutationOperator(mutation)
-	            .setSelectionOperator(selection)
-	            .setMaxIterations(300)
-	            .setPopulationSize(10)
-	            .build() ;
-
-	    AlgorithmRunner algorithmRunner = new AlgorithmRunner.Executor(algorithm)
-	            .execute() ;
-
-	    List<DoubleSolution> population = algorithm.getResult() ;
-	    ArrayList<ArrayList<Double>> solutions = problem.convert_pop(population);
-		JSONObject json = new JSONObject();
-		json.put("solucoes", solutions);
-		Request.execute("http://127.0.0.1:5000/filtering", json);
-	    long computingTime = algorithmRunner.getComputingTime() ;
-
-	    new SolutionListOutput(population)
-	            .setSeparator("\t")
-	            .setVarFileOutputContext(new DefaultFileOutputContext("VAR.tsv"))
-	            .setFunFileOutputContext(new DefaultFileOutputContext("FUN.tsv"))
-	            .print() ;
-
-	    JMetalLogger.logger.info("Total execution time: " + computingTime + "ms");
-	    JMetalLogger.logger.info("Objectives values have been written to file FUN.tsv");
-	    JMetalLogger.logger.info("Variables values have been written to file VAR.tsv");
-	  }
+		    
+		    
+		    
+		    selection = new BinaryTournamentSelection<DoubleSolution>();
+		    JSONObject data = new JSONObject();
+		    JSONObject res = Request.execute("http://127.0.0.1:5000/users", data);    
+		    ArrayList<Long> users = (ArrayList<Long>)res.get("response");
+		    int n = users.size();
+		    for (int i = 0; i < n; i++) {
+		    	try {
+		    		Runtime.getRuntime().exec("clear");
+		    	} catch (IOException e) {
+		    		continue;
+				}
+		    	System.out.println("Faltam " + (i - n) + " usuários");
+		    	Long user = users.get(i);
+		    	try {
+			    	problem = new RecommenderProblem(user);
+			    	double mutationProbability = 1.0 / problem.getNumberOfVariables() ;
+				    double mutationDistributionIndex = 20.0 ;
+				    mutation = new PolynomialMutation(mutationProbability, mutationDistributionIndex) ;
+				    
+				    algorithm = new NSGAIIIBuilder<>(problem)
+				            .setCrossoverOperator(crossover)
+				            .setMutationOperator(mutation)
+				            .setSelectionOperator(selection)
+				            .setMaxIterations(200)
+				            .setPopulationSize(20)
+				            .build() ;
+			
+				    AlgorithmRunner algorithmRunner = new AlgorithmRunner.Executor(algorithm)
+				            .execute() ;
+				    List<DoubleSolution> population = algorithm.getResult() ;
+				    ArrayList<ArrayList<Double>> solutions = problem.convert_pop(population);
+				    System.out.println(solutions.size());
+					JSONObject json = new JSONObject();
+					json.put("solucoes", solutions);
+					Request.execute("http://127.0.0.1:5000/filtering", json);
+				    long computingTime = algorithmRunner.getComputingTime() ;
+		    	} catch (Exception e) {
+					 return;
+				}
+			}
+		    
+		  }
 	}

@@ -37,7 +37,7 @@ public class NSGAIII<S extends Solution<?>> extends AbstractGeneticAlgorithm<S, 
     offSpringEvaluator  = builder.getOffSpringEvaluator();
     /// NSGAIII
     numberOfDivisions = new Vector<>(1) ;
-    numberOfDivisions.add(12) ; // Default value for 3D problems
+    numberOfDivisions.add(3) ; // Default value for 3D problems
 
     (new ReferencePoint<S>()).generateReferencePoints(referencePoints,getProblem().getNumberOfObjectives() , numberOfDivisions);
 

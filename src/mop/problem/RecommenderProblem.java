@@ -14,7 +14,7 @@ public class RecommenderProblem implements BatchDoubleProblem{
 	private ArrayList<Double> upperBound;
 	
 	
-	public RecommenderProblem(int user) {
+	public RecommenderProblem(long user) {
 		JSONObject json = new JSONObject();
 		json.put("user", user);
 		Request.execute("http://127.0.0.1:5000/user", json);
