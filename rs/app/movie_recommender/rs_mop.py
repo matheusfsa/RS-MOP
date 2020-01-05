@@ -68,6 +68,7 @@ class CB_MOP(Recommender):
 
     def fit(self):
         self.df_movies, _ = dataset_word2vec(['genres', 'rating', 'runtimes', 'year'], op='sum', n_features=300)
+        self.df_movies.set_index('movieId')
     
     def split(self, user, df_movies):
         data = {}

@@ -10,9 +10,9 @@ from nltk.tokenize import RegexpTokenizer
 #nltk.download('wordnet')
 from nltk.stem.wordnet import WordNetLemmatizer
 from sklearn.feature_extraction.text import CountVectorizer
-from tfidf import tf_id
-from plot2vec import plot2vec
-from word2vec import word2vec
+from .tfidf import tf_id
+from .plot2vec import plot2vec
+from .word2vec import word2vec
 
 def get_df_movies():
     df_movies = pd.read_csv('./app/datasets/movies_imdb.csv')
