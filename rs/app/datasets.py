@@ -20,7 +20,7 @@ def get_df_movies():
     df_movies = df_movies.loc[:, ['movieId', 'plots', 'genres', 'directors', 'rating', 'runtimes', 'title', 'year']]
     return df_movies
 
-def get_count(df_movies):
+def get_count(df_movies, **kwargs):
     df_movies['plots'] = df_movies['plots'].apply(lambda x: str(x).replace("|"," "))
     ##Creating a list of stop words and adding custom stopwords
     #nltk.download('wordnet')
@@ -51,13 +51,15 @@ def get_count(df_movies):
                 stop_words] 
         text = " ".join(text)
         corpus.append(text)
-    cv = CountVectorizer(max_df=0.8,stop_words=stop_words, max_features=2000, ngram_range=(1,3))
+    n_features = kwargs.get('n_features', 2000)
+    cv = CountVectorizer(max_df=0.8,stop_words=stop_words, max_features=n_features, ngram_range=(1,3))
     return cv.fit_transform(corpus), corpus
 
 
 def get_dataset(feats, new_feats_func, **kwargs):
     df_movies = get_df_movies()
-    count, corpus = get_count(df_movies)
+    n_words = kwargs.get('n_words', 2000)
+    count, corpus = get_count(df_movies, n_features=n_words)
     kwargs['corpus'] = corpus
     kwargs['movies'] = df_movies
     new_feats = kwargs.get('new_feats', None)
@@ -78,7 +80,10 @@ def get_dataset(feats, new_feats_func, **kwargs):
             df_movies_all[col] = X[col]
     else:
         df_movies_all  = X 
-    
+    if 'runtimes' in feats:
+        df_movies_all['runtimes'] = (df_movies_all['runtimes'].min() + df_movies_all['runtimes'])/(df_movies_all['runtimes'].max() - df_movies_all['runtimes'].min())
+    if 'year' in feats:
+        df_movies_all['year'] = (df_movies_all['year'].min() + df_movies_all['year'])/(df_movies_all['year'].max() - df_movies_all['year'].min())        
     df_movies_all['title'] = df_movies['title'] 
     df_movies_all['movieId'] = df_movies['movieId'] 
     return df_movies_all, new_feats

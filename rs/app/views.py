@@ -1,19 +1,18 @@
 from flask import Flask
 from flask import request
 from flask import jsonify
-from datasets import dataset_word2vec, dataset_ratings_user
+from .datasets import dataset_word2vec, dataset_ratings_user
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import RidgeCV
-import evaluate_solutions as ev
 import numpy as np
 import pandas as pd
 from sklearn.metrics.pairwise import cosine_similarity
-from movie_recommender.cf_moea import CF_MOEA
+from .movie_recommender.rs_mop import CB_MOP
 
 
 app = Flask(__name__)
 
-recommender = CF_MOEA('100k')
+recommender = CB_MOP('100k')
 recommender.reset_users()
 @app.route('/users', methods=['POST'])
 def get_users():
@@ -46,7 +45,7 @@ def get_min():
 
 @app.route('/n-variables', methods=['GET', 'POST'])
 def n_variables():
-    return {'response': [15]}
+    return {'response': [recommender.n_variables()]}
 
 @app.route('/evaluate-solution', methods=['GET', 'POST'])
 def evaluate_solution():
