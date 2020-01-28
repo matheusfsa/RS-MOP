@@ -80,10 +80,14 @@ def get_dataset(feats, new_feats_func, **kwargs):
             df_movies_all[col] = X[col]
     else:
         df_movies_all  = X 
+    def min_max(X):
+        return (X - X.min())/ (X.max() - X.min())
     if 'runtimes' in feats:
-        df_movies_all['runtimes'] = (df_movies_all['runtimes'].min() + df_movies_all['runtimes'])/(df_movies_all['runtimes'].max() - df_movies_all['runtimes'].min())
+        df_movies_all['runtimes'] = min_max(df_movies_all['runtimes'])
     if 'year' in feats:
-        df_movies_all['year'] = (df_movies_all['year'].min() + df_movies_all['year'])/(df_movies_all['year'].max() - df_movies_all['year'].min())        
+        df_movies_all['year'] = min_max(df_movies_all['year'])      
+    if 'rating' in feats:
+        df_movies_all['rating'] = min_max(df_movies_all['rating'])     
     df_movies_all['title'] = df_movies['title'] 
     df_movies_all['movieId'] = df_movies['movieId'] 
     return df_movies_all, new_feats

@@ -30,15 +30,15 @@ class CB_MOP(Recommender):
     test = None
     last_user = -1
     sim_users = None
-    combination = 1
+    combination = 16
     n_features = 2000
-    index_src = './app/datasets/index_sample.txt'
+    index_src = './app/datasets/index.txt'
     name = 'tfid'
     new_feats = None
     end_user = 1329
     
     def __init__(self, n_ratings):
-        self.experiments_src = './app/recomendacoes/experiments/' + self.name + '-'+str(self.n_features) + '-'+str(self.combination) + '.txt'
+        self.experiments_src = './app/recomendacoes/' + self.name + '-'+str(self.n_features) + '-'+str(self.combination) + '.txt'
         all_feats = ['genres', 'rating', 'runtimes', 'year']
         self.combinations = []
         for i in range(5):
@@ -221,11 +221,11 @@ class CB_MOP(Recommender):
         with open(self.experiments_src, 'w') as outfile:
             json.dump(data, outfile)
             print('Salvo em:', self.experiments_src)
-        print(self.user)
-        if int(self.user) == self.end_user and self.combination <= len(self.combinations):
-            self.combination += 1
-            self.experiments_src = './app/recomendacoes/experiments/'+ self.name + '-'+str(self.n_features) + '-'+str(self.combination) + '.txt'
-            self.fit()
+        #aprint(self.user)
+        #if int(self.user) == self.end_user and self.combination <= len(self.combinations):
+        #    self.combination += 1
+        #    self.experiments_src = './app/recomendacoes/'+ self.name + '-'+str(self.n_features) + '-'+str(self.combination) + '.txt'
+        #    self.fit()
         return res.index
 
     
