@@ -13,7 +13,11 @@ from .movie_recommender.rs_mop import CB_MOP
 app = Flask(__name__)
 
 recommender = CB_MOP('100k')
-recommender.reset_users()
+@app.route('/reset_users', methods=['POST'])
+def reset_users():
+    recommender.reset_users()
+    return {'response': []}
+
 @app.route('/users', methods=['POST'])
 def get_users():
     users = [int(u) for u in recommender.users()]

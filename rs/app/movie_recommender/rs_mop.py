@@ -14,7 +14,11 @@ from app.datasets import dataset_word2vec, dataset_ratings_user, dataset_tfid
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.model_selection import train_test_split
 from sklearn.metrics.pairwise import cosine_similarity
-from sklearn.linear_model import RidgeCV
+from sklearn.linear_model import LassoCV, RidgeCV, BayesianRidge, Ridge, Lasso, ElasticNet, SGDRegressor
+from sklearn.kernel_ridge import KernelRidge
+from sklearn.ensemble import AdaBoostRegressor
+from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.model_selection import GridSearchCV
 import json
 from sklearn.metrics.pairwise import cosine_similarity
 import itertools
@@ -30,15 +34,21 @@ class CB_MOP(Recommender):
     test = None
     last_user = -1
     sim_users = None
-    combination = 16
-    n_features = 2000
+    combination = 10
+
+    n_features = 150
+    nsga_iteractions = 300
+    src_folder = './app/recomendacoes/'
     index_src = './app/datasets/index.txt'
-    name = 'tfid'
+    name = 'w2v'
+    model_name = 'ridge'
+    extra = '-2'
     new_feats = None
     end_user = 1329
     
     def __init__(self, n_ratings):
-        self.experiments_src = './app/recomendacoes/' + self.name + '-'+str(self.n_features) + '-'+str(self.combination) + '.txt'
+        self.experiments_src = self.src_folder + self.name + '-'+str(self.n_features) + '-'+str(self.combination) + '-' + self.model_name + '-'+ str(self.nsga_iteractions) + self.extra +'.txt'
+        print(self.experiments_src)
         all_feats = ['genres', 'rating', 'runtimes', 'year']
         self.combinations = []
         for i in range(5):
@@ -92,7 +102,7 @@ class CB_MOP(Recommender):
             del data['last_user']
         users = list(data.keys())
         self.end_user = int(users[-1])
-        self.reset_users()
+        #self.reset_users()
         return users[(self.last_user + 1):]
 
     def get_user(self):
@@ -105,10 +115,24 @@ class CB_MOP(Recommender):
         return int(user)
 
     def fit(self):
+        import time
+        ini = time.time()
+        new_feats_src = './app/recomendacoes/experiments/moea-rs/feats/' + str(self.name) + '-' + str(self.n_features) + '.csv'
+        if self.name == 'w2v' or self.name == 'w2v-2':
+            generate_dataset = dataset_word2vec
+        if self.name == 'tfid':
+            generate_dataset = dataset_tfid
+        try:
+            #self.new_feats = np.genfromtxt(new_feats_src, delimiter=',')
+            self.new_feats = pd.read_csv(new_feats_src, sep=',',header=None).values
+        except IOError:
+            self.new_feats = None
         if self.new_feats is None:
-            self.df_movies, self.new_feats = dataset_tfid(self.features, op='sum', n_features=self.n_features, n_words=self.n_features)
+            self.df_movies, self.new_feats = generate_dataset(self.features, op='sum', n_features=self.n_features, n_words=self.n_features)
         else:
-            self.df_movies, self.new_feats = dataset_tfid(self.features, op='sum', n_features=self.n_features, new_feats=self.new_feats,n_words=self.n_features)
+            self.df_movies, self.new_feats = generate_dataset(self.features, op='sum', n_features=self.n_features, new_feats=self.new_feats,n_words=self.n_features)
+        np.savetxt(new_feats_src, self.new_feats, delimiter=",")
+        print(time.time() - ini)
     
     def split(self, user, df_movies):
         data = {}
@@ -156,7 +180,16 @@ class CB_MOP(Recommender):
         self.y_train = self.train['rating_user']
         self.X_test = self.test.drop(columns=['rating_user','title'])
         self.y_test = self.test['rating_user']
-        self.model = RidgeCV(cv=5).fit(self.X_train, self.y_train)
+        if self.model_name == 'ridge':
+            self.model = GridSearchCV(Ridge(), {'alpha':[1e-3, 1e-2, 1e-1, 1]}, cv=5, iid=False)
+        if self.model_name ==  'gbr':
+            self.model = GridSearchCV(GradientBoostingRegressor(learning_rate=0.1, max_depth=1, random_state=0, loss='ls'),{'n_estimators':[50, 100, 150]}, cv=5, iid=False)
+        #ridge = GridSearchCV(Ridge(), {'alpha':[1e-3, 1e-2, 1e-1, 1]}, cv=5, iid=False)
+        #svr =  GridSearchCV(SVR(gamma='scale'),{'kernel':('linear', 'rbf'), 'C':[1, 10]}, cv=5, iid=False)
+        #elastic = GridSearchCV(ElasticNet(), {'alpha':[1e-3, 1e-2, 1e-1, 1]}, cv=5, iid=False)
+        #gbr = GridSearchCV(GradientBoostingRegressor(learning_rate=0.1, max_depth=1, random_state=0, loss='ls'), 
+                       #{'n_estimators':[50, 100, 150]}, cv=5, iid=False)
+        self.model = self.model.fit(self.X_train, self.y_train)
         self.user = user
         #self.set_sim_users(10)
         #self.models_sim = [(self.get_model_from_user(i), v) for i, v in self.sim_users.iteritems()]
@@ -178,7 +211,7 @@ class CB_MOP(Recommender):
         else:
             y[:, 1] = -self.get_diversity(solutions)
         
-        y[:, 2] = -self.get_novelty(solutions, data)
+        y[:, 2] = -1 #self.get_novelty(solutions, data)
         
         return y
 
@@ -207,10 +240,15 @@ class CB_MOP(Recommender):
             for x in bests:
                     if x not in pop_index:
                         return x
+        #pop_index = sim.max(axis=1).argsort()[:12]
+        
+        
         for i in range(solutions.shape[0]):
             bests = sim[i, :].argsort() 
             pop_index.append(get_best(bests, pop_index))
-        res = self.test.iloc[pop_index, :].drop_duplicates()
+        res = self.test.iloc[pop_index[:15], :].drop_duplicates()
+        data = {}
+        #print(objs)
         data = {}
         try:
             with open(self.experiments_src) as json_file:
